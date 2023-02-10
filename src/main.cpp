@@ -108,6 +108,12 @@ void HarrySong(){
      }
 }
 
+void Measure(){
+    sensors.requestTemperatures();
+    Serial.printf("Light : %d , Moiture : %d , Temp : %.2f °C\n", analogRead(LDR), analogRead(SOIL), sensors.getTempCByIndex(0));
+    delay(500);
+}
+
 void setup() {
     Serial.begin(115200);
     sensors.begin(); 
@@ -115,7 +121,5 @@ void setup() {
 }
 
 void loop() {
-    sensors.requestTemperatures();
-    Serial.printf("Light : %d , Moiture : %d , Temp : %.2f °C\n", analogRead(LDR), analogRead(SOIL), sensors.getTempCByIndex(0));
-    delay(500);
+    Measure();
 }
