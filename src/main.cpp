@@ -121,7 +121,11 @@ void PlaySong(){
 
 void Measure(){
     sensors.requestTemperatures();
-    Serial.printf("Light : %d , Moiture : %d , Temp : %.2f °C\n", analogRead(LDR), analogRead(SOIL), sensors.getTempCByIndex(0));
+    light = analogRead(LDR);
+    moisture = analogRead(SOIL);
+    temp = sensors.getTempCByIndex(0);
+
+    Serial.printf("Light : %d , Moiture : %d , Temp : %.2f °C\n", light, moisture, temp);
     delay(500);
 }
 
