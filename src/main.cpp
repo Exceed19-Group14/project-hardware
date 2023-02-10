@@ -12,10 +12,14 @@
 #define red_LED 25
 #define green_LED 26
 
+TaskHandle_t TaskA = NULL;
+TaskHandle_t TaskB = NULL;
+
 OneWire oneWire(TEMP);
 DallasTemperature sensors(&oneWire);
 
 int StopSong = 0;
+int ClickToStart = 0;
 
 const String baseUrl = "WEB";
 
@@ -139,9 +143,10 @@ void Measure(){
     delay(2000);
 }
 
-void Start(){
+void Start(void *param){
+    while(true){
     Measure();
-    if (On_Off_Auto == 1){ // ต้องเพิ่ม detect moiture
+    if (On_Off_Auto == 1 && moisture < 300){
         Serial.println("=======================");
         Serial.println("Initiated!! Auto Mode.");
         Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
@@ -149,13 +154,15 @@ void Start(){
         Serial.println("Done.");
         Serial.println("=======================");
     }
-    if (On_Off_Auto == 0){ // ต้องเพิ่ม force start
+    if (On_Off_Auto == 0 && ClickToStart == 1){
         Serial.println("=======================");
         Serial.println("Initiated!! Manual Mode.");
         Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
         PlaySong();
         Serial.println("Done.");
         Serial.println("=======================");
+        ClickToStart = 0;
+    }
     }
 }
 
@@ -168,9 +175,12 @@ void setup() {
     ledcSetup(1, 5000, 8);
     ledcAttachPin(green_LED, 1);
 
-    Start();
+    ClickToStart = 1;
+
+    xTaskCreatePinnedToCore(Start, "StartProgram", 10000, NULL, 1, &TaskA, 0);
+
 }
 
 void loop() {
-    Measure();
+
 }
