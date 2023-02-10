@@ -108,6 +108,24 @@ void HarrySong(){
      }
 }
 
+void PlaySong(){
+    for (int i = 0; i < 100; i++) 
+    {
+		digitalWrite(BUZZER, HIGH);
+		delay(1);
+		digitalWrite(BUZZER, LOW);
+		delay(1);
+	}
+	delay(50);
+	for (int j = 0; j < 100; j++) {
+		digitalWrite(BUZZER, HIGH);
+		delay(2);
+		digitalWrite(BUZZER, LOW);
+		delay(2);
+	}
+	delay(500);
+}
+
 void Measure(){
     sensors.requestTemperatures();
     Serial.printf("Light : %d , Moiture : %d , Temp : %.2f °C\n", analogRead(LDR), analogRead(SOIL), sensors.getTempCByIndex(0));
