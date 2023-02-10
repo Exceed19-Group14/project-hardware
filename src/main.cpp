@@ -1,15 +1,11 @@
 #include <Arduino.h>
-
-#define analogPin 33
-
-int val = 0;
+#define LDR 32
 void setup() {
-Serial.begin(115299);
+    Serial.begin(115200);
+    Serial.println("LDR");
 }
- 
+
 void loop() {
-val = analogRead(analogPin);
-Serial.print("val = "); 
-Serial.println(val); 
-delay(500);
+    Serial.println(analogRead(LDR));
+    delay(500);
 }
