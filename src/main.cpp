@@ -9,6 +9,8 @@
 #define SOIL 33
 #define TEMP 13
 #define BUZZER 12
+#define red_LED 25
+#define green_LED 26
 
 OneWire oneWire(TEMP);
 DallasTemperature sensors(&oneWire);
@@ -32,6 +34,7 @@ void Connect_Wifi() {
 }
 
 int On_Off = 0;
+long Dulation = 1000;
 
 void GET_post(){
     DynamicJsonDocument doc(2048);
@@ -101,37 +104,47 @@ void HarrySong(){
      }
 }
 
-long Dulation = 1000;
 void PlaySong(){
     long StartTime = millis();
     long EndTime = StartTime + Dulation;
     while(millis() < EndTime)
-    {
+    {   
 		digitalWrite(BUZZER, HIGH);
         delay(1);
         digitalWrite(BUZZER, LOW);
         delay(1);
 	}
-    
 }
+
+int IndexMeasure = 0;
 
 void Measure(){
     sensors.requestTemperatures();
     light = analogRead(LDR);
     moisture = analogRead(SOIL);
     temp = sensors.getTempCByIndex(0);
+    IndexMeasure++;
 
-    Serial.printf("Light : %d , Moiture : %d , Temp : %.2f °C\n", light, moisture, temp);
+    Serial.printf("Index : %d | Light : %d , Moiture : %d , Temp : %.2f°C\n",IndexMeasure, light, moisture, temp);
     delay(2000);
 }
 
 void Start(){
     if (On_Off == 1){
+        ledcWrite(0, 200);
+        ledcWrite(1, 0);
         Serial.println("=======================");
         Serial.println("Initiated!!");
         Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
         Serial.println("=======================");
+
         PlaySong();
+
+        On_Off = 0;
+    }
+    if (On_Off == 0){
+        ledcWrite(0, 0);
+        ledcWrite(1, 70);
     }
 }
 
@@ -139,6 +152,10 @@ void setup() {
     Serial.begin(115200);
     sensors.begin(); 
     pinMode(BUZZER, OUTPUT);
+    ledcSetup(0, 5000, 8);
+    ledcAttachPin(red_LED, 0);
+    ledcSetup(1, 5000, 8);
+    ledcAttachPin(green_LED, 1);
 
     On_Off = 1;
     Start();
