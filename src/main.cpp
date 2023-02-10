@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include <OneWire.h>
+#include <ArduinoJson.h>
+#include <HTTPClient.h>
 #include <DallasTemperature.h>
 #include "pitches.h"
 
@@ -12,6 +14,22 @@ OneWire oneWire(TEMP);
 DallasTemperature sensors(&oneWire);
 
 int StopSong = 0;
+
+const String baseUrl = "WEB";
+
+const char *ssid = "<Wifi name>";
+const char *password = "<Wifi password>";
+
+void Connect_Wifi() {
+    WiFi.begin(ssid, password);
+    Serial.print("Connecting to WiFi");
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+        }
+    Serial.print("OK! IP=");
+    Serial.println(WiFi.localIP());
+}
 
 int melody[] = {
   REST, NOTE_D4,
