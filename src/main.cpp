@@ -33,7 +33,7 @@ void Connect_Wifi() {
     Serial.println(WiFi.localIP());
 }
 
-int On_Off = 0;
+int On_Off_Auto = 0;
 long Dulation = 1000;
 
 void GET_post(){
@@ -47,7 +47,7 @@ void GET_post(){
         Serial.println(httpResponseCode);
         String payload = http.getString();
         deserializeJson(doc, payload);
-        On_Off = doc["id"].as<int>();
+        On_Off_Auto = doc["id"].as<int>();
     }
     else {
         Serial.print("Error code: ");
@@ -113,6 +113,7 @@ void PlaySong(){
         delay(1);
         digitalWrite(BUZZER, LOW);
         delay(1);
+        // ต้องเพิ่ม force stop
 	}
 }
 
@@ -125,26 +126,36 @@ void Measure(){
     temp = sensors.getTempCByIndex(0);
     IndexMeasure++;
 
+    if (moisture < 300){
+        ledcWrite(0, 200);
+        ledcWrite(1, 0);
+    }
+    if (moisture >= 300){
+        ledcWrite(0, 0);
+        ledcWrite(1, 70);
+    }
+
     Serial.printf("Index : %d | Light : %d , Moiture : %d , Temp : %.2f°C\n",IndexMeasure, light, moisture, temp);
     delay(2000);
 }
 
 void Start(){
-    if (On_Off == 1){
-        ledcWrite(0, 200);
-        ledcWrite(1, 0);
+    Measure();
+    if (On_Off_Auto == 1){ // ต้องเพิ่ม detect moiture
         Serial.println("=======================");
-        Serial.println("Initiated!!");
+        Serial.println("Initiated!! Auto Mode.");
         Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
-        Serial.println("=======================");
-
         PlaySong();
-
-        On_Off = 0;
+        Serial.println("Done.");
+        Serial.println("=======================");
     }
-    if (On_Off == 0){
-        ledcWrite(0, 0);
-        ledcWrite(1, 70);
+    if (On_Off_Auto == 0){ // ต้องเพิ่ม force start
+        Serial.println("=======================");
+        Serial.println("Initiated!! Manual Mode.");
+        Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
+        PlaySong();
+        Serial.println("Done.");
+        Serial.println("=======================");
     }
 }
 
@@ -157,7 +168,6 @@ void setup() {
     ledcSetup(1, 5000, 8);
     ledcAttachPin(green_LED, 1);
 
-    On_Off = 1;
     Start();
 }
 
