@@ -20,6 +20,7 @@ DallasTemperature sensors(&oneWire);
 
 int StopSong = 0;
 int ClickToStart = 0;
+int CheckTask = 0;
 
 const String baseUrl = "http://group14.exceed19.online/";
 
@@ -48,16 +49,13 @@ void GET_post(void *param){
     http.begin(url);
     int httpResponseCode = http.GET();
     if (httpResponseCode >= 200 && httpResponseCode < 400) {
-        Serial.print("GET!!");
+        Serial.print("GET!!\n");
         String payload = http.getString();
         deserializeJson(doc, payload);
         ClickToStart = doc["water_status"].as<int>();
         Dulation = doc["duration"].as<int>();
         Serial.printf("Status : %d, Dulation : %d\n", ClickToStart, Dulation);
-        if (ClickToStart == 1){
-            vTaskDelay(Dulation/portTICK_PERIOD_MS);
-        }
-        Serial.println("=======================");
+        Serial.println("==============================");
     }
     else {
         Serial.print("Error code: ");
@@ -88,9 +86,9 @@ void PATCH_data(void *param){
 
     int httpResponseCode = http.PATCH(json);
     if (httpResponseCode >= 200 && httpResponseCode < 300) {
-        Serial.print("PATCH COMPLETE !!");
+        Serial.print("PATCH COMPLETE !!\n");
         Serial.printf("Light : %d , Moiture : %d , Temp : %.2f°C\n", light, moisture, temp);
-        Serial.println("=======================");
+        Serial.println("==============================");
     }
     else {
         Serial.print("Error code: ");
@@ -150,20 +148,21 @@ void Measure(){
 void Start(void *param){
     while(true){
     Measure();
+    CheckTask = 1;
     if (On_Off_Auto == 1 && moisture < 300){
         Serial.println("Initiated!! Auto Mode.");
         Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
         PlaySong();
         Serial.println("Done.");
-        Serial.println("=======================");
+        Serial.println("==============================");
     }
     if (On_Off_Auto == 0 && ClickToStart == 1){
         Serial.println("Initiated!! Start AquaBot!!");
         Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
+        Serial.println("==============================");
         PlaySong();
-        Serial.println("Done.");
-        Serial.println("=======================");
         ClickToStart = 0;
+        CheckTask = 0;
     }
     }
 }
@@ -180,8 +179,8 @@ void setup() {
     Connect_Wifi();
     
     xTaskCreatePinnedToCore(Start, "StartProgram", 10000, NULL, 1, &TaskA, 0);
-    xTaskCreatePinnedToCore(GET_post, "GET_post", 10000, NULL, 1, &TaskA, 1);
-    xTaskCreatePinnedToCore(PATCH_data, "PATCH_data", 10000, NULL, 1, &TaskA, 1);
+    xTaskCreatePinnedToCore(GET_post, "GET_post", 10000, NULL, 1, &TaskA, 0);
+    xTaskCreatePinnedToCore(PATCH_data, "PATCH_data", 10000, NULL, 1, &TaskB, 1);
 }
 
 void loop() {
