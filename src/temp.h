@@ -1,33 +1,21 @@
-#include <Arduino.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-#define KY001_Signal_PIN 22
+#define ONE_WIRE_BUS 13
 
-// Libraries are configured
-OneWire oneWire(KY001_Signal_PIN);          
-DallasTemperature sensors(&oneWire);    
-
-
-void setup() {
-
-    // Initialize serial output
-    Serial.begin(115200);
-    Serial.println("KY-001 temperature measurement");
-
-    // Sensor is initialized
-    sensors.begin();  
-}
-
-//main program loop
-void loop()
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+void setup(void)
 {
-    // Temperature measurement is started...
-    sensors.requestTemperatures();
-    // ... and output measured temperature
-    Serial.print("Temperature: ");
-    Serial.print(sensors.getTempCByIndex(0));
-    Serial.println(" °C");
-
-    delay(500); // 1s pause until next measurement
+  // start serial port
+  Serial.begin(115200);
+  sensors.begin(); 
 }
+void loop(void)
+{ 
+  Serial.print("Requesting temperatures...");
+  sensors.requestTemperatures();
+  Serial.println("DONE");
+  Serial.print("Temperature for Device 1 is: ");
+  Serial.print(sensors.getTempCByIndex(0)); 
+  }
