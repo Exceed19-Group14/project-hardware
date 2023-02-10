@@ -101,22 +101,18 @@ void HarrySong(){
      }
 }
 
+long Dulation = 1000;
 void PlaySong(){
-    for (int i = 0; i < 100; i++) 
+    long StartTime = millis();
+    long EndTime = StartTime + Dulation;
+    while(millis() < EndTime)
     {
 		digitalWrite(BUZZER, HIGH);
-		delay(1);
-		digitalWrite(BUZZER, LOW);
-		delay(1);
+        delay(1);
+        digitalWrite(BUZZER, LOW);
+        delay(1);
 	}
-	delay(50);
-	for (int j = 0; j < 100; j++) {
-		digitalWrite(BUZZER, HIGH);
-		delay(2);
-		digitalWrite(BUZZER, LOW);
-		delay(2);
-	}
-	delay(500);
+    
 }
 
 void Measure(){
@@ -126,13 +122,26 @@ void Measure(){
     temp = sensors.getTempCByIndex(0);
 
     Serial.printf("Light : %d , Moiture : %d , Temp : %.2f °C\n", light, moisture, temp);
-    delay(500);
+    delay(2000);
+}
+
+void Start(){
+    if (On_Off == 1){
+        Serial.println("=======================");
+        Serial.println("Initiated!!");
+        Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
+        Serial.println("=======================");
+        PlaySong();
+    }
 }
 
 void setup() {
     Serial.begin(115200);
     sensors.begin(); 
     pinMode(BUZZER, OUTPUT);
+
+    On_Off = 1;
+    Start();
 }
 
 void loop() {
