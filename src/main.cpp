@@ -20,7 +20,6 @@ DallasTemperature sensors(&oneWire);
 
 int StopSong = 0;
 int ClickToStart = 0;
-int CheckTask = 0;
 
 const String baseUrl = "http://group14.exceed19.online/";
 
@@ -94,7 +93,7 @@ void PATCH_data(){
         Serial.print("PATCH Error code: ");
         Serial.println(httpResponseCode);
     }
-
+    http.end();
 }
 
 void PATCH_After_Bloom(){
@@ -105,11 +104,13 @@ void PATCH_After_Bloom(){
     int httpResponseCode = http.PATCH("");
     if (httpResponseCode >= 200 && httpResponseCode < 300) {
         Serial.print("PATCH AFETR BLOOM!!\n");
+        Serial.println("==============================");
     }
     else {
         Serial.print("PATCH Error code: ");
         Serial.println(httpResponseCode);
     }
+    http.end();
 }
 
 void HarrySong(){
@@ -123,11 +124,6 @@ void HarrySong(){
         delay(pauseBetweenNotes);
     
         noTone(BUZZER);
-        
-        if (StopSong == 1)
-        {
-            break;
-        }
      }
 }
 
@@ -150,19 +146,18 @@ void Measure(){
     temp = sensors.getTempCByIndex(0);
 
     if (moisture < Target_Moiture){
-        ledcWrite(0, 200);
-        ledcWrite(1, 0);
-    }
-    if (moisture >= Target_Moiture){
         ledcWrite(0, 0);
         ledcWrite(1, 70);
+    }
+    if (moisture >= Target_Moiture){
+        ledcWrite(0, 200);
+        ledcWrite(1, 0);
     }
 }
 
 void Start(void *param){
     while(true){
     Measure();
-    CheckTask = 1;
     if (On_Off_Auto == 1){
         Serial.printf("Light : %d , Moiture : %d , Temp : %.2f°C\n", light, moisture, temp);
         if (moisture < Target_Moiture){
@@ -170,19 +165,20 @@ void Start(void *param){
             Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
             PlaySong();
             Serial.println("Done.");
-            PATCH_After_Bloom();
             Serial.println("==============================");
         }
     }
-    if (On_Off_Auto == 0 && ClickToStart == 1){
-        Serial.println("Initiated!! Start AquaBot!!");
-        Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
-        Serial.println("==============================");
-        PlaySong();
-        ClickToStart = 0;
-        CheckTask = 0;
+    if (On_Off_Auto == 0){
+        if (ClickToStart == 1){
+            Serial.println("Initiated!! Start AquaBot!!");
+            Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
+            Serial.println("==============================");
+            PlaySong();
+            PATCH_After_Bloom();
+            ClickToStart = 0;
+        }
     }
-    PATCH_data();
+    vTaskDelay(500/portTICK_PERIOD_MS);
     }
 }
 
@@ -196,10 +192,10 @@ void setup() {
     ledcAttachPin(green_LED, 1);
 
     Connect_Wifi();
-    xTaskCreatePinnedToCore(Start, "StartProgram", 25000, NULL, 1, &TaskA, 0);
-    xTaskCreatePinnedToCore(GET_post, "GET_post", 20000, NULL, 1, &TaskB, 1);
+    xTaskCreatePinnedToCore(Start, "StartProgram", 30000, NULL, 1, &TaskA, 0);
+    xTaskCreatePinnedToCore(GET_post, "GET_post", 30000, NULL, 1, &TaskB, 1);
 }
 
 void loop() {
-
+    PATCH_data();
 }
