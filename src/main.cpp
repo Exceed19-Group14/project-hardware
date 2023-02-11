@@ -39,6 +39,7 @@ void Connect_Wifi() {
 }
 
 int On_Off_Auto = 0;
+int Target_Moiture = 250;
 long Dulation = 1000;
 
 void GET_post(void *param){
@@ -58,7 +59,7 @@ void GET_post(void *param){
         Serial.println("==============================");
     }
     else {
-        Serial.print("Error code: ");
+        Serial.print("GET Error code: ");
         Serial.println(httpResponseCode);
     }
     vTaskDelay(5000/portTICK_PERIOD_MS);
@@ -69,9 +70,8 @@ int light = 0;
 int moisture = 0;
 float temp = 0.0;
 
-void PATCH_data(void *param){
-    while(true){
-    vTaskDelay(20000/portTICK_PERIOD_MS);
+void PATCH_data(){
+    delay(20000);
     String json;
     DynamicJsonDocument doc(2048);
     doc["light"] = light;
@@ -86,14 +86,29 @@ void PATCH_data(void *param){
 
     int httpResponseCode = http.PATCH(json);
     if (httpResponseCode >= 200 && httpResponseCode < 300) {
-        Serial.print("PATCH COMPLETE !!\n");
+        Serial.print("PATCH COMPLETE!!\n");
         Serial.printf("Light : %d , Moiture : %d , Temp : %.2f°C\n", light, moisture, temp);
         Serial.println("==============================");
     }
     else {
-        Serial.print("Error code: ");
+        Serial.print("PATCH Error code: ");
         Serial.println(httpResponseCode);
     }
+
+}
+
+void PATCH_After_Bloom(){
+    const String url_after_bloom = baseUrl + "plant/1/water/stop";
+
+    HTTPClient http;
+    http.begin(url_after_bloom);
+    int httpResponseCode = http.PATCH("");
+    if (httpResponseCode >= 200 && httpResponseCode < 300) {
+        Serial.print("PATCH AFETR BLOOM!!\n");
+    }
+    else {
+        Serial.print("PATCH Error code: ");
+        Serial.println(httpResponseCode);
     }
 }
 
@@ -134,27 +149,30 @@ void Measure(){
     moisture = analogRead(SOIL);
     temp = sensors.getTempCByIndex(0);
 
-    if (moisture < 300){
+    if (moisture < Target_Moiture){
         ledcWrite(0, 200);
         ledcWrite(1, 0);
     }
-    if (moisture >= 300){
+    if (moisture >= Target_Moiture){
         ledcWrite(0, 0);
         ledcWrite(1, 70);
     }
-    delay(2000);
 }
 
 void Start(void *param){
     while(true){
     Measure();
     CheckTask = 1;
-    if (On_Off_Auto == 1 && moisture < 300){
-        Serial.println("Initiated!! Auto Mode.");
-        Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
-        PlaySong();
-        Serial.println("Done.");
-        Serial.println("==============================");
+    if (On_Off_Auto == 1){
+        Serial.printf("Light : %d , Moiture : %d , Temp : %.2f°C\n", light, moisture, temp);
+        if (moisture < Target_Moiture){
+            Serial.println("Initiated!! Auto Mode.");
+            Serial.printf("Dulation = %d Secound.\n", Dulation/1000);
+            PlaySong();
+            Serial.println("Done.");
+            PATCH_After_Bloom();
+            Serial.println("==============================");
+        }
     }
     if (On_Off_Auto == 0 && ClickToStart == 1){
         Serial.println("Initiated!! Start AquaBot!!");
@@ -164,6 +182,7 @@ void Start(void *param){
         ClickToStart = 0;
         CheckTask = 0;
     }
+    PATCH_data();
     }
 }
 
@@ -177,10 +196,8 @@ void setup() {
     ledcAttachPin(green_LED, 1);
 
     Connect_Wifi();
-    
-    xTaskCreatePinnedToCore(Start, "StartProgram", 10000, NULL, 1, &TaskA, 0);
-    xTaskCreatePinnedToCore(GET_post, "GET_post", 10000, NULL, 1, &TaskA, 0);
-    xTaskCreatePinnedToCore(PATCH_data, "PATCH_data", 10000, NULL, 1, &TaskB, 1);
+    xTaskCreatePinnedToCore(Start, "StartProgram", 25000, NULL, 1, &TaskA, 0);
+    xTaskCreatePinnedToCore(GET_post, "GET_post", 20000, NULL, 1, &TaskB, 1);
 }
 
 void loop() {
